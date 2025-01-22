@@ -1,0 +1,51 @@
+name: Build, Test & Push Docker Image
+
+# Déclenchement du workflow sur un push (ici, branch main), 
+# tu peux adapter si tu veux d'autres branches ou pull_request
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build_test_and_push:
+    # Utilise la VM Ubuntu pour exécuter les commandes Docker
+    runs-on: ubuntu-latest
+
+    steps:
+      # Étape 1 : Récupération du code
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      # Étape 2 : Construction de l'image Docker
+      - name: Build Docker Image
+        run: |
+          docker build -t galoux/node-js-sample:${{ github.sha }} .
+
+      # Étape 3 : Lancement du conteneur en arrière-plan
+      - name: Run Container
+        run: |
+          docker run -d -p 8080:8080 --name testcontainer galoux/node-js-sample:${{ github.sha }}
+          sleep 10
+
+      # Étape 4 : Test du conteneur
+      - name: Test Container
+        run: |
+          curl -f http://127.0.0.1:8080
+          echo "✅ Container responded successfully!"
+
+      # Étape 5 : Arrêt et suppression du conteneur
+      - name: Stop Container
+        run: |
+          docker stop testcontainer
+          docker rm testcontainer
+
+      # Étape 6 : Connexion à Docker Hub
+      # (Les identifiants sont stockés dans les secrets du repo : DOCKER_USER et DOCKER_PASS)
+      - name: Docker Login
+        run: |
+          echo "${{ secrets.DOCKER_PASS }}" | docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
+
+      # Étape 7 : Push de l'image sur Docker Hub (uniquement si les étapes précédentes réussissent)
+      - name: Push Docker Image
+        run: |
+          docker push galoux/node-js-sample:${{ github.sha }}
