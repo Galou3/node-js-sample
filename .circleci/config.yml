@@ -18,30 +18,32 @@ jobs:
       - run:
           name: Build Docker Image
           command: |
-            docker build -t myorg/node-js-sample:$CIRCLE_SHA1 .
+            docker build -t node-js-sample .
 
       # Step 4: Run the container in the background
       - run:
           name: Run Container
           command: |
             # -d runs it in the background
-            # --rm removes it automatically when stopped
-            docker run -d --rm --name testcontainer myorg/node-js-sample:$CIRCLE_SHA1
+            docker run -d -p 8080:8081 --name testcontainer node-js-sample
             # Give the container a few seconds to initialize
-            sleep 5
+            sleep 10
 
       # Step 5: Test the container by curling inside it
       - run:
           name: Test Container
           command: |
             # Run curl INSIDE the container, checking the server on port 8080
-            docker exec testcontainer curl -f http://127.0.0.1:8080
+            curl -f http://127.0.0.1:8080
             echo "✅ Container responded successfully!"
 
       # Step 6: (Optional) Stop the container explicitly 
       - run:
           name: Stop Container
-          command: docker stop testcontainer
+          command: |
+            docker stop testcontainer
+            docker rm testcontainer
+
 
 workflows:
   build_and_test:
