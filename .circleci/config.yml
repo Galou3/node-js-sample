@@ -13,13 +13,13 @@ jobs:
       - run:
           name: Build Docker Image
           command: |
-            docker build -t my-dockerhub-username/my-repo:$CIRCLE_SHA1 .
+            docker build -t galoux/node-js-sample:$CIRCLE_SHA1 .
 
       # Step 3: Run the container in background
       - run:
           name: Run Container
           command: |
-            docker run -d -p 8080:8080 --name testcontainer my-dockerhub-username/my-repo:$CIRCLE_SHA1
+            docker run -d -p 8080:8080 --name testcontainer galoux/node-js-sample:$CIRCLE_SHA1
             # Give the container time to start
             sleep 10
 
@@ -43,7 +43,7 @@ jobs:
           name: Push Docker Image
           command: |
             echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-            docker push my-dockerhub-username/my-repo:$CIRCLE_SHA1
+            docker push galoux/node-js-sample:$CIRCLE_SHA1
 
 workflows:
   build_test_and_push_workflow:
