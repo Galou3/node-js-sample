@@ -1,46 +1,51 @@
 version: 2.1
 
 jobs:
-  build_and_test_image:
+  build_test_and_push:
     machine:
-      # Utilise l'image Ubuntu 22.04 fournie par CircleCI
       image: ubuntu-2204:current
 
     steps:
-      # Étape 1 : Récupération du code
+      # Step 1: Check out code
       - checkout
 
-      # Étape 2 : Construction de l'image Docker
+      # Step 2: Build Docker image
       - run:
           name: Build Docker Image
           command: |
-            docker build -t node-js-sample .
+            docker build -t my-dockerhub-username/my-repo:$CIRCLE_SHA1 .
 
-      # Étape 3 : Lancement du conteneur en arrière-plan
+      # Step 3: Run the container in background
       - run:
           name: Run Container
           command: |
-            # -d : détaché (arrière-plan)
-            # -p 8080:8080 : mappe le port 8080 du conteneur au port 8080 de la machine
-            docker run -d -p 8080:8080 --name testcontainer node-js-sample
-            # Attendre quelques secondes que l'app soit réellement prête
-            sleep 20
+            docker run -d -p 8080:8080 --name testcontainer my-dockerhub-username/my-repo:$CIRCLE_SHA1
+            # Give the container time to start
+            sleep 10
 
-      # Étape 4 : Test du conteneur (on curl le host local sur le port 8080)
+      # Step 4: Test the container
       - run:
           name: Test Container
           command: |
             curl -f http://127.0.0.1:8080
             echo "✅ Container responded successfully!"
 
-      # Étape 5 : Arrêt et nettoyage
+      # Step 5: Stop and remove the container
       - run:
           name: Stop Container
           command: |
             docker stop testcontainer
             docker rm testcontainer
 
+      # Step 6: Push the image to Docker Hub
+      # Only runs if the previous steps (build + test) succeed
+      - run:
+          name: Push Docker Image
+          command: |
+            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+            docker push my-dockerhub-username/my-repo:$CIRCLE_SHA1
+
 workflows:
-  build_and_test:
+  build_test_and_push_workflow:
     jobs:
-      - build_and_test_image
+      - build_test_and_push
