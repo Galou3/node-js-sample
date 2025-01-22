@@ -17,7 +17,7 @@ COPY . .
 EXPOSE 8080
 
 # Set environment variable for the port (optional; your code already defaults to 8080)
-ENV PORT=8081
+ENV PORT=8080
 
 # Command to start the application
 CMD ["npm", "start"]
