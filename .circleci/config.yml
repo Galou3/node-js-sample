@@ -2,48 +2,43 @@ version: 2.1
 
 jobs:
   build_and_test_image:
-    docker:
-      # Use a lightweight CircleCI image that supports Docker
-      - image: cimg/base:stable
+    machine:
+      # Utilise l'image Ubuntu 22.04 fournie par CircleCI
+      image: ubuntu-2204:current
 
     steps:
-      # Step 1: Check out your code
+      # Étape 1 : Récupération du code
       - checkout
 
-      # Step 2: Enable Docker (for building/running containers)
-      - setup_remote_docker:
-          docker_layer_caching: true
-
-      # Step 3: Build the Docker image
+      # Étape 2 : Construction de l'image Docker
       - run:
           name: Build Docker Image
           command: |
             docker build -t node-js-sample .
 
-      # Step 4: Run the container in the background
+      # Étape 3 : Lancement du conteneur en arrière-plan
       - run:
           name: Run Container
           command: |
-            # -d runs it in the background
-            docker run -d -p 8080:8081 --name testcontainer node-js-sample
-            # Give the container a few seconds to initialize
+            # -d : détaché (arrière-plan)
+            # -p 8080:8080 : mappe le port 8080 du conteneur au port 8080 de la machine
+            docker run -d -p 8080:8080 --name testcontainer node-js-sample
+            # Attendre quelques secondes que l'app soit réellement prête
             sleep 10
 
-      # Step 5: Test the container by curling inside it
+      # Étape 4 : Test du conteneur (on curl le host local sur le port 8080)
       - run:
           name: Test Container
           command: |
-            # Run curl INSIDE the container, checking the server on port 8080
             curl -f http://127.0.0.1:8080
             echo "✅ Container responded successfully!"
 
-      # Step 6: (Optional) Stop the container explicitly 
+      # Étape 5 : Arrêt et nettoyage
       - run:
           name: Stop Container
           command: |
             docker stop testcontainer
             docker rm testcontainer
-
 
 workflows:
   build_and_test:
