@@ -24,7 +24,7 @@ jobs:
             # -p 8080:8080 : mappe le port 8080 du conteneur au port 8080 de la machine
             docker run -d -p 8080:8080 --name testcontainer node-js-sample
             # Attendre quelques secondes que l'app soit réellement prête
-            sleep 10
+            sleep 20
 
       # Étape 4 : Test du conteneur (on curl le host local sur le port 8080)
       - run:
